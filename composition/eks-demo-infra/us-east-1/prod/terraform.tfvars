@@ -44,7 +44,23 @@ map_users = []
 # WARNING: mixing managed and unmanaged node groups will render unmanaged nodes to be unable to connect to internet & join the cluster when restarting.
 # how many groups of K8s worker nodes you want? Specify at least one group of worker node
 # gotcha: managed node group doesn't support 1) propagating taint to K8s nodes and 2) custom userdata. Ref: https://eksctl.io/usage/eks-managed-nodes/#feature-parity-with-unmanaged-nodegroups
-node_groups = {}
+node_groups = [
+{
+    name                 = "managed-worker-group-prod-1"
+    instance_type        = "t3.medium" # since we are using AWS-VPC-CNI, allocatable pod IPs are defined by instance size: https://docs.google.com/spreadsheets/d/1MCdsmN7fWbebscGizcK6dAaPGS-8T_dYxWp0IdwkMKI/edit#gid=1549051942, https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
+    asg_max_size         = 2
+    asg_min_size         = 1
+    asg_desired_capacity = 2 # this will be ignored if cluster autoscaler is enabled: asg_desired_capacity: https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/autoscaling.md#notes
+    root_encrypted      = true
+    tags = [
+      {
+        "key"                 = "managed-node"
+        "propagate_at_launch" = "true"
+        "value"               = "true"
+      },
+    ]
+  },
+]
 
 enabled_cluster_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]  # <-------- STEP 2
 cluster_log_retention_in_days = 365 # default 90 days, but auditing service Vanta requires min 1 year
